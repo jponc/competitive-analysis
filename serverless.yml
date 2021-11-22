@@ -1,0 +1,48 @@
+service: competitive-analysis
+
+variablesResolutionMode: 20210326
+
+plugins:
+  - serverless-prune-plugin
+package:
+  patterns:
+    - '!./**'
+    - './bin/**'
+
+provider:
+  name: aws
+  runtime: go1.x
+  profile: uptactics
+  memorySize: 128
+  region: us-east-1 # US East 1 (N. Virginia)
+  stage: ${opt:stage, 'staging'}
+  lambdaHashingVersion: "20201221"
+  apiGateway:
+    shouldStartNameWithService: true
+  tracing:
+    apiGateway: true
+    lambda: true
+
+  iam:
+    role:
+      statements:
+        # Allow all SNS and SES
+        - Effect: "Allow"
+          Resource: "*"
+          Action:
+            - sns:*
+
+functions:
+  # == HTTP ==
+  Healthcheck:
+    handler: bin/Healthcheck
+    events:
+      - http:
+          path: /healthcheck
+          method: get
+          cors: true
+
+custom:
+  prune:
+    automatic: true
+    number: 2
