@@ -1,0 +1,37 @@
+service: ca-migration-v2
+
+variablesResolutionMode: 20210326
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-prune-plugin
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  profile: uptactics
+  memorySize: 128
+  region: us-east-1 # US East 1 (N. Virginia)
+  stage: ${opt:stage, 'staging'}
+  lambdaHashingVersion: "20201221"
+  timeout: 30
+  vpc: ${self:custom.vpc}
+  apiGateway:
+    shouldStartNameWithService: true
+  environment:
+    DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
+
+functions:
+  UpMigration:
+    handler: UpMigration.handler
+
+custom:
+  env:
+    DB_CONN_URL: ${ssm:/competitive-analysis/${self:provider.stage}/DB_CONN_URL}
+  vpc:
+    securityGroupIds: ${ssm:/uptactics/${self:provider.stage}/DEFAULT_SECURITY_GROUP}
+    subnetIds: ${ssm:/uptactics/${self:provider.stage}/PRIVATE_SUBNET_IDS}
+
+  prune:
+    automatic: true
+    number: 2
