@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/gofrs/uuid"
 	"github.com/jponc/competitive-analysis/api/apischema"
 	"github.com/jponc/competitive-analysis/internal/repository/dbrepository"
 	"github.com/jponc/competitive-analysis/pkg/lambdaresponses"
@@ -43,11 +42,17 @@ func (s *Service) CreateQueryJob(ctx context.Context, request events.APIGatewayP
 		return lambdaresponses.Respond400(fmt.Errorf("bad request"))
 	}
 
-	queryJobID := uuid.Must(uuid.NewV4())
 	err = s.dbrepository.Connect()
 	if err != nil {
 		log.Errorf("error connecting to repository db: %v", err)
 		return lambdaresponses.Respond500()
 	}
-	return lambdaresponses.Respond200(apischema.CreateQueryJobResponse{QueryJobID: queryJobID.String()})
+
+	id, err := s.dbrepository.CreateQueryJob(ctx, req.Keyword)
+	if err != nil {
+		log.Errorf("error creating query job: %v", err)
+		return lambdaresponses.Respond500()
+	}
+
+	return lambdaresponses.Respond200(apischema.CreateQueryJobResponse{QueryJobID: id.String()})
 }
