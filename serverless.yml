@@ -54,10 +54,24 @@ functions:
       SNS_PREFIX: ${self:custom.env.SNS_PREFIX}
       DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
 
+  QueryJobZenserp:
+    handler: bin/QueryJobZenserp
+    events:
+      - sns: ${self:service}-${self:provider.stage}-QueryJobCreated
+    timeout: 120
+    vpc: ${self:custom.vpc}
+    environment:
+      SNS_PREFIX: ${self:custom.env.SNS_PREFIX}
+      DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
+      ZENSERP_API_KEY: ${self:custom.env.ZENSERP_API_KEY}
+
 custom:
   env:
+    JWT_SECRET: ${ssm:/${self:service}/${self:provider.stage}/JWT_SECRET}
     DB_CONN_URL: ${ssm:/${self:service}/${self:provider.stage}/DB_CONN_URL}
     SNS_PREFIX: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${self:service}-${self:provider.stage}'
+    ZENSERP_API_KEY: ${ssm:/${self:service}/${self:provider.stage}/ZENSERP_API_KEY}
+    TEXTRAZOR_API_KEY: ${ssm:/${self:service}/${self:provider.stage}/TEXTRAZOR_API_KEY}
   vpc:
     securityGroupIds: ${ssm:/uptactics/${self:provider.stage}/DEFAULT_SECURITY_GROUP}
     subnetIds: ${ssm:/uptactics/${self:provider.stage}/PRIVATE_SUBNET_IDS}
