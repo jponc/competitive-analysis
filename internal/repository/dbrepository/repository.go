@@ -33,10 +33,6 @@ func (r *Repository) CreateQueryJob(ctx context.Context, keyword string) (uuid.U
 		return uuid.Nil, fmt.Errorf("dbClient not initialised")
 	}
 
-	if keyword == "" {
-		return uuid.Nil, fmt.Errorf("keyword is blank")
-	}
-
 	var id uuid.UUID
 
 	err := r.dbClient.GetContext(
@@ -54,4 +50,29 @@ func (r *Repository) CreateQueryJob(ctx context.Context, keyword string) (uuid.U
 	}
 
 	return id, nil
+}
+
+func (r *Repository) CreateQueryLocation(ctx context.Context, queryJobID, device, searchEngine, num, country, location string) (uuid.UUID, error) {
+	if r.dbClient == nil {
+		return uuid.Nil, fmt.Errorf("dbClient not initialised")
+	}
+
+	var id uuid.UUID
+
+	err := r.dbClient.GetContext(
+		ctx,
+		&id,
+		`
+			INSERT INTO query_location (query_job_id, device, search_engine, num, country, location)
+			VALUES ($1)
+			RETURNING id
+		`,
+		queryJobID, device, searchEngine, num, country, location)
+
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to insert query job: %v", err)
+	}
+
+	return id, nil
+
 }

@@ -54,5 +54,16 @@ func (s *Service) QueryJobZenserp(ctx context.Context, snsEvent events.SNSEvent)
 		log.Fatalf("unable to unarmarshal message: %v", err)
 	}
 
-	log.Infof("KEYWORD TO PROCESS: %s", msg.Keyword)
+	// res, err := s.zenserpClient.SearchWithCountry(
+	//   ctx,
+	//   msg.Keyword,
+	//   "google.com",
+	//   "desktop",
+	//   "us",
+	//   100,
+	// )
+
+	// for _, item := range res.ResulItems {
+	//   item.
+	// }
 }

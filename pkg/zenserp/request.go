@@ -17,6 +17,7 @@ import (
 const (
 	zenserpBaseURL     = "https://app.zenserp.com"
 	searchPath         = "api/v2/search?q=%s&num=%d&search_engine=%s&device=%s"
+	searchCountryPath  = "api/v2/search?q=%s&num=%d&search_engine=%s&device=%s&gl=%s"
 	searchLocationPath = "api/v2/search?q=%s&num=%d&search_engine=%s&device=%s&gl=%s&location=%s"
 	batchPath          = "api/v1/batches"
 	getBatchPath       = "api/v1/batches/%s"
