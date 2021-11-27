@@ -7,10 +7,11 @@ import (
 
 // Config
 type Config struct {
-	ZenserpApiKey    string
-	RDSConnectionURL string
-	AWSRegion        string
-	SNSPrefix        string
+	ZenserpApiKey          string
+	ZenserpBatchWebhookURL string
+	RDSConnectionURL       string
+	AWSRegion              string
+	SNSPrefix              string
 }
 
 // NewConfig initialises a new config
@@ -35,11 +36,17 @@ func NewConfig() (*Config, error) {
 		return nil, err
 	}
 
+	zenserpBatchWebhookURL, err := getEnv("ZENSERP_BATCH_WEBHOOK_URL")
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
-		AWSRegion:        awsRegion,
-		SNSPrefix:        snsPrefix,
-		RDSConnectionURL: rdsConnectionURL,
-		ZenserpApiKey:    zenserpApiKey,
+		AWSRegion:              awsRegion,
+		SNSPrefix:              snsPrefix,
+		RDSConnectionURL:       rdsConnectionURL,
+		ZenserpApiKey:          zenserpApiKey,
+		ZenserpBatchWebhookURL: zenserpBatchWebhookURL,
 	}, nil
 }
 

@@ -26,14 +26,13 @@ provider:
   iam:
     role:
       statements:
-        # Allow all SNS and SES
+        # Allow all SNS
         - Effect: "Allow"
           Resource: "*"
           Action:
             - sns:*
 
 functions:
-  # == HTTP ==
   Healthcheck:
     handler: bin/Healthcheck
     events:
@@ -64,6 +63,16 @@ functions:
       SNS_PREFIX: ${self:custom.env.SNS_PREFIX}
       DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
       ZENSERP_API_KEY: ${self:custom.env.ZENSERP_API_KEY}
+      ZENSERP_BATCH_WEBHOOK_URL: ${self:custom.env.ZENSERP_BATCH_WEBHOOK_URL}
+
+  ZenserpBatchWebhook:
+    handler: bin/ZenserpBatchWebhook
+    events:
+      - http:
+          path: /ZenserpBatchWebhook
+          method: post
+          cors: true
+    timeout: 30
 
 custom:
   env:
@@ -71,6 +80,7 @@ custom:
     DB_CONN_URL: ${ssm:/${self:service}/${self:provider.stage}/DB_CONN_URL}
     SNS_PREFIX: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${self:service}-${self:provider.stage}'
     ZENSERP_API_KEY: ${ssm:/${self:service}/${self:provider.stage}/ZENSERP_API_KEY}
+    ZENSERP_BATCH_WEBHOOK_URL: ${ssm:/${self:service}/${self:provider.stage}/ZENSERP_BATCH_WEBHOOK_URL}
     TEXTRAZOR_API_KEY: ${ssm:/${self:service}/${self:provider.stage}/TEXTRAZOR_API_KEY}
   vpc:
     securityGroupIds: ${ssm:/uptactics/${self:provider.stage}/DEFAULT_SECURITY_GROUP}

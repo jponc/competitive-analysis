@@ -119,3 +119,9 @@ func (s *Service) CreateQueryJob(ctx context.Context, request events.APIGatewayP
 
 	return lambdaresponses.Respond200(apischema.CreateQueryJobResponse{QueryJobID: queryJobID.String()})
 }
+
+func (s *Service) ZenserpBatchWebhook(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	log.Infof("%s", request.Body)
+
+	return lambdaresponses.Respond200(apischema.HealthcheckResponse{Status: "OK"})
+}

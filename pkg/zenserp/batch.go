@@ -5,9 +5,9 @@ import (
 	"fmt"
 )
 
-func (c *Client) Batch(ctx context.Context, name, webhookUrl string, jobs []Job) (*BatchResult, error) {
+func (c *Client) Batch(ctx context.Context, name string, jobs []Job) (*BatchResult, error) {
 	batchRequest := &BatchRequest{
-		WebhookURL: webhookUrl,
+		WebhookURL: c.batchWebhookURL,
 		Name:       name,
 		Jobs:       jobs,
 	}

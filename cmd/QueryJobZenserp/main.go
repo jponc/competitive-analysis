@@ -39,7 +39,7 @@ func main() {
 		Timeout: time.Duration(1 * time.Minute),
 	}
 
-	zenserpClient, err := zenserp.NewClient(config.ZenserpApiKey, httpClient)
+	zenserpClient, err := zenserp.NewClient(config.ZenserpApiKey, httpClient, config.ZenserpBatchWebhookURL)
 	if err != nil {
 		log.Fatalf("cannot initialise zenserp client %v", err)
 	}

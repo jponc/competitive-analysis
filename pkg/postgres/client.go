@@ -40,7 +40,7 @@ func (c *Client) SelectContext(ctx context.Context, dest interface{}, query stri
 	return c.db.SelectContext(ctx, dest, query, args...)
 }
 
-func (c *Client) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+func (c *Client) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	return c.db.ExecContext(ctx, query, args...)
 }
 
