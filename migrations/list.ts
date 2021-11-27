@@ -74,6 +74,11 @@ const migrations = {
       ALTER TABLE query_location ALTER COLUMN num TYPE TEXT;
     `);
   },
+  v06_add_zenserp_batch_processed: async (client: Client) => {
+    await client.query(`
+      ALTER TABLE query_job ADD COLUMN zenserp_batch_processed BOOLEAN DEFAULT FALSE;
+    `);
+  },
 };
 
 export default migrations;
