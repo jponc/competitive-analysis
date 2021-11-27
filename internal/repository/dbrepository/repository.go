@@ -119,7 +119,6 @@ func (r *Repository) GetQueryLocations(ctx context.Context, queryJobID uuid.UUID
 	}
 
 	return &queryLocations, nil
-
 }
 
 func (r *Repository) SetZenserpBatchToQueryJob(ctx context.Context, queryJobID uuid.UUID, zenserpBatchID string) error {
@@ -141,5 +140,45 @@ func (r *Repository) SetZenserpBatchToQueryJob(ctx context.Context, queryJobID u
 	}
 
 	return nil
+}
 
+func (r *Repository) GetUnprocessedQueryJobs(ctx context.Context) (*[]types.QueryJob, error) {
+	if r.dbClient == nil {
+		return nil, fmt.Errorf("dbClient not initialised")
+	}
+
+	queryJobs := []types.QueryJob{}
+
+	err := r.dbClient.SelectContext(
+		ctx,
+		&queryJobs,
+		`SELECT * FROM query_job WHERE zenserp_batch_processed = false AND zenserp_batch_id IS NOT NULL`,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get query locations: %w", err)
+	}
+
+	return &queryJobs, nil
+}
+
+func (r *Repository) ProcessQueryJob(ctx context.Context, queryJobID uuid.UUID) error {
+	if r.dbClient == nil {
+		return fmt.Errorf("dbClient not initialised")
+	}
+
+	_, err := r.dbClient.ExecContext(
+		ctx,
+		`
+			UPDATE query_job
+			SET zenserp_batch_processed = true
+			WHERE id = $1
+		`, queryJobID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to update queryjob with zenserp batch id: %w", err)
+	}
+
+	return nil
 }

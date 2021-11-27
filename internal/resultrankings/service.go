@@ -98,3 +98,38 @@ func (s *Service) QueryJobZenserp(ctx context.Context, snsEvent events.SNSEvent)
 		log.Fatalf("failed to set zenserp batch ID to query job: %v", err)
 	}
 }
+
+func (s *Service) ZenserpBatchExtractResults(ctx context.Context, snsEvent events.SNSEvent) {
+	if s.zenserpClient == nil {
+		log.Fatalf("zenserpClient not defined")
+	}
+
+	if s.repository == nil {
+		log.Fatalf("repository not defined")
+	}
+
+	if s.snsClient == nil {
+		log.Fatalf("snsClient not defined")
+	}
+
+	if err := s.repository.Connect(); err != nil {
+		log.Fatalf("can't connect to DB")
+	}
+
+	snsMsg := snsEvent.Records[0].SNS.Message
+
+	var msg eventschema.ZenserpBatchDoneProcessingMessage
+	err := json.Unmarshal([]byte(snsMsg), &msg)
+	if err != nil {
+		log.Fatalf("unable to unarmarshal message: %v", err)
+	}
+
+	queryJobID, err := uuid.FromString(msg.QueryJobID)
+	if err != nil {
+		log.Fatalf("unable to convert query job string to UUID: %v", err)
+	}
+
+	zenserpBatchID := msg.ZenserpBatchID
+
+	log.Infof("query job id: %s, batchID: %s", queryJobID, zenserpBatchID)
+}

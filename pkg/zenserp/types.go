@@ -5,6 +5,9 @@ type QueryInfo struct {
 	SearchEngine string `json:"search_engine"`
 	Device       string `json:"device"`
 	URL          string `json:"url"`
+	Num          string `json:"num"`
+	Country      string `json:"gl"`
+	Location     string `json:"location"`
 }
 
 type ResultItem struct {

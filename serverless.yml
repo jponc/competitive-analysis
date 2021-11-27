@@ -73,6 +73,25 @@ functions:
           method: post
           cors: true
     timeout: 30
+    vpc: ${self:custom.vpc}
+    environment:
+      SNS_PREFIX: ${self:custom.env.SNS_PREFIX}
+      DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
+      ZENSERP_API_KEY: ${self:custom.env.ZENSERP_API_KEY}
+      ZENSERP_BATCH_WEBHOOK_URL: ${self:custom.env.ZENSERP_BATCH_WEBHOOK_URL}
+
+  ZenserpBatchExtractResults:
+    handler: bin/ZenserpBatchExtractResults
+    memorySize: 512
+    events:
+      - sns: ${self:service}-${self:provider.stage}-ZenserpBatchDoneProcessing
+    timeout: 600
+    vpc: ${self:custom.vpc}
+    environment:
+      SNS_PREFIX: ${self:custom.env.SNS_PREFIX}
+      DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
+      ZENSERP_API_KEY: ${self:custom.env.ZENSERP_API_KEY}
+      ZENSERP_BATCH_WEBHOOK_URL: ${self:custom.env.ZENSERP_BATCH_WEBHOOK_URL}
 
 custom:
   env:

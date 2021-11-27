@@ -1,13 +1,17 @@
 package main
 
 import (
-	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/jponc/competitive-analysis/internal/api"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/jponc/competitive-analysis/internal/repository/dbrepository"
+	"github.com/jponc/competitive-analysis/internal/resultrankings"
 	"github.com/jponc/competitive-analysis/pkg/postgres"
 	"github.com/jponc/competitive-analysis/pkg/sns"
+	"github.com/jponc/competitive-analysis/pkg/zenserp"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/aws/aws-lambda-go/lambda"
 )
 
 func main() {
@@ -31,6 +35,15 @@ func main() {
 		log.Fatalf("cannot initialise sns client %v", err)
 	}
 
-	service := api.NewService(dbRepository, snsClient, nil)
-	lambda.Start(service.CreateQueryJob)
+	httpClient := &http.Client{
+		Timeout: time.Duration(1 * time.Minute),
+	}
+
+	zenserpClient, err := zenserp.NewClient(config.ZenserpApiKey, httpClient, config.ZenserpBatchWebhookURL)
+	if err != nil {
+		log.Fatalf("cannot initialise zenserp client %v", err)
+	}
+
+	service := resultrankings.NewService(zenserpClient, dbRepository, snsClient)
+	lambda.Start(service.ZenserpBatchExtractResults)
 }

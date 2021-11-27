@@ -11,6 +11,7 @@ import (
 	"github.com/jponc/competitive-analysis/internal/repository/dbrepository"
 	"github.com/jponc/competitive-analysis/pkg/lambdaresponses"
 	"github.com/jponc/competitive-analysis/pkg/sns"
+	"github.com/jponc/competitive-analysis/pkg/zenserp"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -37,14 +38,16 @@ var queryConfigDefaults = QueryConfig{
 }
 
 type Service struct {
-	dbrepository *dbrepository.Repository
-	snsClient    *sns.Client
+	dbrepository  *dbrepository.Repository
+	snsClient     *sns.Client
+	zenserpClient *zenserp.Client
 }
 
-func NewService(dbrepository *dbrepository.Repository, snsClient *sns.Client) *Service {
+func NewService(dbrepository *dbrepository.Repository, snsClient *sns.Client, zenserpClient *zenserp.Client) *Service {
 	s := &Service{
-		dbrepository: dbrepository,
-		snsClient:    snsClient,
+		dbrepository:  dbrepository,
+		snsClient:     snsClient,
+		zenserpClient: zenserpClient,
 	}
 
 	return s
@@ -121,7 +124,58 @@ func (s *Service) CreateQueryJob(ctx context.Context, request events.APIGatewayP
 }
 
 func (s *Service) ZenserpBatchWebhook(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	log.Infof("%s", request.Body)
+	if s.dbrepository == nil {
+		log.Errorf("dbrepository not defined")
+		return lambdaresponses.Respond500()
+	}
+
+	if s.snsClient == nil {
+		log.Errorf("snsClient not defined")
+		return lambdaresponses.Respond500()
+	}
+
+	if s.zenserpClient == nil {
+		log.Errorf("zenserpClient not defined")
+		return lambdaresponses.Respond500()
+	}
+
+	err := s.dbrepository.Connect()
+	if err != nil {
+		log.Errorf("error connecting to repository db: %v", err)
+		return lambdaresponses.Respond500()
+	}
+
+	unprocessedQueryJobs, err := s.dbrepository.GetUnprocessedQueryJobs(ctx)
+	if err != nil {
+		log.Fatalf("failed to query unprocessed query jobs: %v", err)
+	}
+
+	for _, queryJob := range *unprocessedQueryJobs {
+		batch, err := s.zenserpClient.GetBatch(ctx, *queryJob.ZenserpBatchID)
+		if err != nil {
+			log.Fatal("failed to get batch %s: %v", queryJob.ZenserpBatchID, err)
+		}
+
+		// if zenserp batch state is notified meaning it's done, we send an SNS message to process this batch
+		// and mark is processed from the database.
+		if batch.State == "notified" {
+			// Publish QueryJobCreated
+			msg := eventschema.ZenserpBatchDoneProcessingMessage{
+				QueryJobID:     queryJob.ID.String(),
+				ZenserpBatchID: *queryJob.ZenserpBatchID,
+			}
+
+			err = s.snsClient.Publish(ctx, eventschema.ZenserpBatchDoneProcessing, msg)
+			if err != nil {
+				log.Fatalf("failed to publish SNS: %v", err)
+			}
+
+			err = s.dbrepository.ProcessQueryJob(ctx, queryJob.ID)
+			if err != nil {
+				log.Fatalf("failed to mark query job as processed: %v", err)
+			}
+		}
+	}
 
 	return lambdaresponses.Respond200(apischema.HealthcheckResponse{Status: "OK"})
 }
