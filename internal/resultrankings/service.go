@@ -116,6 +116,7 @@ func (s *Service) ZenserpBatchExtractResults(ctx context.Context, snsEvent event
 		log.Fatalf("can't connect to DB")
 	}
 
+	// Unmarshal message
 	snsMsg := snsEvent.Records[0].SNS.Message
 
 	var msg eventschema.ZenserpBatchDoneProcessingMessage
@@ -129,7 +130,53 @@ func (s *Service) ZenserpBatchExtractResults(ctx context.Context, snsEvent event
 		log.Fatalf("unable to convert query job string to UUID: %v", err)
 	}
 
-	zenserpBatchID := msg.ZenserpBatchID
+	// Get QueryLocations so we can pull the ID later based on location
+	queryLocations, err := s.repository.GetQueryLocations(ctx, queryJobID)
+	if err != nil {
+		log.Fatalf("unable to get query locations of %s: %v", queryJobID, err)
+	}
 
-	log.Infof("query job id: %s, batchID: %s", queryJobID, zenserpBatchID)
+	// Get ZenserpBatch
+	zenserpBatchID := msg.ZenserpBatchID
+	batch, err := s.zenserpClient.GetBatch(ctx, zenserpBatchID)
+
+	urls := map[string]bool{}
+
+	// Create QueryItems based on zenserp batch result and query location
+	for _, result := range batch.Results {
+		for _, queryLocation := range *queryLocations {
+			// Found query location, create query items
+			if result.Query.Location == queryLocation.Location {
+				for _, resultItem := range result.ResulItems {
+					if resultItem.URL == "" {
+						// We don't want to process empty URL
+						continue
+					}
+
+					_, err := s.repository.CreateQueryItem(ctx, queryJobID, queryLocation.ID, resultItem.Position, resultItem.URL, resultItem.Title)
+					if err != nil {
+						log.Fatalf("unable to create query item for query job (%s) and query location (%s): %v", queryJobID.String(), queryLocation.ID.String(), err)
+					}
+
+					// Create a set of urls to be processed later
+					urls[resultItem.URL] = true
+				}
+			}
+		}
+	}
+
+	// Iterate all urls generated earlier, then publish a message to extract results
+	for url := range urls {
+		msg := eventschema.ParseQueryJobURLMessage{
+			QueryJobID: queryJobID.String(),
+			URL:        url,
+		}
+
+		err = s.snsClient.Publish(ctx, eventschema.ParseQueryJobURL, msg)
+		if err != nil {
+			log.Fatalf("failed to publish SNS: %v", err)
+		}
+	}
+
+	log.Infof("done creating query items: query job id: %s, batchID: %s", queryJobID, zenserpBatchID)
 }

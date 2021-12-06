@@ -182,3 +182,49 @@ func (r *Repository) ProcessQueryJob(ctx context.Context, queryJobID uuid.UUID) 
 
 	return nil
 }
+
+func (r *Repository) CreateQueryItem(ctx context.Context, queryJobID uuid.UUID, queryLocationID uuid.UUID, position int, url, title string) (uuid.UUID, error) {
+	if r.dbClient == nil {
+		return uuid.Nil, fmt.Errorf("dbClient not initialised")
+	}
+
+	var id uuid.UUID
+
+	err := r.dbClient.GetContext(
+		ctx,
+		&id,
+		`
+			INSERT INTO query_item (query_job_id, query_location_id, position, url, title)
+			VALUES ($1, $2, $3, $4, $5)
+			RETURNING id
+		`, queryJobID, queryLocationID, position, url, title,
+	)
+
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to create query item: %w", err)
+	}
+
+	return id, nil
+}
+
+func (r *Repository) GetQueryItem(ctx context.Context, id uuid.UUID) (*types.QueryItem, error) {
+	if r.dbClient == nil {
+		return nil, fmt.Errorf("dbClient not initialised")
+	}
+
+	queryItem := types.QueryItem{}
+
+	err := r.dbClient.GetContext(
+		ctx,
+		&queryItem,
+		`
+			SELECT * FROM query_item where id = $1
+		`, id,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get query item: %w", err)
+	}
+
+	return &queryItem, nil
+}

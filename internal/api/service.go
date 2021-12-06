@@ -32,7 +32,7 @@ var queryConfigDefaults = QueryConfig{
 		"Denton,North Carolina,United States",
 		"Kingfield,Maine,United States",
 	},
-	Num:          "100",
+	Num:          "50",
 	Device:       "desktop",
 	SearchEngine: "google.com",
 }
@@ -159,7 +159,7 @@ func (s *Service) ZenserpBatchWebhook(ctx context.Context, request events.APIGat
 		// if zenserp batch state is notified meaning it's done, we send an SNS message to process this batch
 		// and mark is processed from the database.
 		if batch.State == "notified" {
-			// Publish QueryJobCreated
+			// Publish ZenserpBatchDoneProcessing
 			msg := eventschema.ZenserpBatchDoneProcessingMessage{
 				QueryJobID:     queryJob.ID.String(),
 				ZenserpBatchID: *queryJob.ZenserpBatchID,

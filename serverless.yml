@@ -93,6 +93,17 @@ functions:
       ZENSERP_API_KEY: ${self:custom.env.ZENSERP_API_KEY}
       ZENSERP_BATCH_WEBHOOK_URL: ${self:custom.env.ZENSERP_BATCH_WEBHOOK_URL}
 
+  TextRazorParseQueryJobURL:
+    handler: bin/TextRazorParseQueryJobURL
+    memorySize: 512
+    events:
+      - sns: ${self:service}-${self:provider.stage}-ParseQueryJobURL
+    timeout: 600
+    vpc: ${self:custom.vpc}
+    environment:
+      DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
+      TEXTRAZOR_API_KEY: ${self:custom.env.TEXTRAZOR_API_KEY}
+
 custom:
   env:
     JWT_SECRET: ${ssm:/${self:service}/${self:provider.stage}/JWT_SECRET}

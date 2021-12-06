@@ -79,6 +79,16 @@ const migrations = {
       ALTER TABLE query_job ADD COLUMN zenserp_batch_processed BOOLEAN DEFAULT FALSE;
     `);
   },
+  v07_add_error_processing_bool_to_query_item: async (client: Client) => {
+    await client.query(`
+      ALTER TABLE query_item ADD COLUMN error_processing BOOLEAN DEFAULT FALSE;
+    `);
+  },
+  v08_remove_not_null_query_item_body: async (client: Client) => {
+    await client.query(`
+      ALTER TABLE query_item ALTER COLUMN body DROP NOT NULL;
+    `);
+  },
 };
 
 export default migrations;

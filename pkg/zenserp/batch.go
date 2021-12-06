@@ -23,7 +23,6 @@ func (c *Client) Batch(ctx context.Context, name string, jobs []Job) (*BatchResu
 }
 
 func (c *Client) GetBatch(ctx context.Context, batchID string) (*Batch, error) {
-
 	var b Batch
 
 	endpoint := fmt.Sprintf(getBatchPath, batchID)

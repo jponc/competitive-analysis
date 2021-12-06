@@ -41,6 +41,7 @@ func (c *Client) Analyze(ctx context.Context, siteUrl string, extractors []Extra
 	data := url.Values{}
 	data.Set("url", siteUrl)
 	data.Set("cleanup.returnCleaned", "true")
+	data.Set("cleanup.mode", "cleanHTML")
 	data.Set("extractors", eArr.ToString())
 
 	r, err := http.NewRequest("POST", endpoint, strings.NewReader(data.Encode()))

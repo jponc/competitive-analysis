@@ -36,4 +36,5 @@ type QueryItem struct {
 	Body            string     `db:"body"`
 	ProcessedAt     *time.Time `db:"processed_at"`
 	CreatedAt       time.Time  `db:"created_at"`
+	ErrorProcessing bool       `db:"error_processing"`
 }
