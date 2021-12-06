@@ -4,6 +4,7 @@ const (
 	QueryJobCreated            string = "QueryJobCreated"
 	ParseQueryJobURL           string = "ParseQueryJobURL"
 	ZenserpBatchDoneProcessing string = "ZenserpBatchDoneProcessing"
+	DoneProcessingQueryJobURL  string = "DoneProcessingQueryJobURL"
 )
 
 type QueryJobCreatedMessage struct {
@@ -17,6 +18,11 @@ type ZenserpBatchDoneProcessingMessage struct {
 }
 
 type ParseQueryJobURLMessage struct {
+	QueryJobID string `json:"query_job_id"`
+	URL        string `json:"url"`
+}
+
+type DoneProcessingQueryJobURLMessage struct {
 	QueryJobID string `json:"query_job_id"`
 	URL        string `json:"url"`
 }

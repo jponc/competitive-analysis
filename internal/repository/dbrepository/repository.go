@@ -228,3 +228,90 @@ func (r *Repository) GetQueryItem(ctx context.Context, id uuid.UUID) (*types.Que
 
 	return &queryItem, nil
 }
+
+func (r *Repository) SetQueryItemsErrorProcessing(ctx context.Context, queryJobID uuid.UUID, url string) error {
+	if r.dbClient == nil {
+		return fmt.Errorf("dbClient not initialised")
+	}
+
+	_, err := r.dbClient.ExecContext(
+		ctx,
+		`
+			UPDATE query_item
+			SET processed_at = now(), error_processing = true
+			WHERE query_job_id = $1 and url = $2
+		`, queryJobID, url,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to update query item error processing: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) SetQueryItemsProcessedWithBody(ctx context.Context, queryJobID uuid.UUID, url string, body string) error {
+	if r.dbClient == nil {
+		return fmt.Errorf("dbClient not initialised")
+	}
+
+	_, err := r.dbClient.ExecContext(
+		ctx,
+		`
+			UPDATE query_item
+			SET processed_at = now(), error_processing = false, body = $3
+			WHERE query_job_id = $1 and url = $2
+		`, queryJobID, url, body,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to update query item error processing: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) GetUnprocessedQueryItemsCount(ctx context.Context, queryJobID uuid.UUID) (int, error) {
+	if r.dbClient == nil {
+		return 0, fmt.Errorf("dbClient not initialised")
+	}
+
+	var count int
+
+	err := r.dbClient.GetContext(
+		ctx,
+		&count,
+		`
+			SELECT COUNT(*)
+			FROM query_item
+			WHERE query_job_id = $1 AND processed_at IS NULL
+		`, queryJobID,
+	)
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to get count of unprocessed query items (%s): %w", queryJobID, err)
+	}
+
+	return count, nil
+}
+
+func (r *Repository) MarkQueryJobAsComplete(ctx context.Context, queryJobID uuid.UUID) error {
+	if r.dbClient == nil {
+		return fmt.Errorf("dbClient not initialised")
+	}
+
+	_, err := r.dbClient.ExecContext(
+		ctx,
+		`
+			UPDATE query_job
+			SET completed_at = now()
+			WHERE id = $1
+		`, queryJobID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to mark query job (%s) as complete: %w", queryJobID.String(), err)
+	}
+
+	return nil
+}

@@ -82,10 +82,10 @@ functions:
 
   ZenserpBatchExtractResults:
     handler: bin/ZenserpBatchExtractResults
-    memorySize: 512
+    memorySize: 256
     events:
       - sns: ${self:service}-${self:provider.stage}-ZenserpBatchDoneProcessing
-    timeout: 600
+    timeout: 120 # 2 minutes timeout to create query items
     vpc: ${self:custom.vpc}
     environment:
       SNS_PREFIX: ${self:custom.env.SNS_PREFIX}
@@ -95,14 +95,25 @@ functions:
 
   TextRazorParseQueryJobURL:
     handler: bin/TextRazorParseQueryJobURL
-    memorySize: 512
+    memorySize: 256
     events:
       - sns: ${self:service}-${self:provider.stage}-ParseQueryJobURL
-    timeout: 600
+    timeout: 120 # 2 minutes timeout to run analysis from textrazor and save body of query item
+    reservedConcurrency: 2 # Added 2 concurrent lambda executions because of the current textrazor plan cap
+    vpc: ${self:custom.vpc}
+    environment:
+      SNS_PREFIX: ${self:custom.env.SNS_PREFIX}
+      DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
+      TEXTRAZOR_API_KEY: ${self:custom.env.TEXTRAZOR_API_KEY}
+
+  CheckCompletedQueryJobs:
+    handler: bin/CheckCompletedQueryJobs
+    events:
+      - sns: ${self:service}-${self:provider.stage}-DoneProcessingQueryJobURL
+    reservedConcurrency: 1 # only 1 instance running at a single time to avoid possible race conditions (won't happen anyway since there's db locks)
     vpc: ${self:custom.vpc}
     environment:
       DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
-      TEXTRAZOR_API_KEY: ${self:custom.env.TEXTRAZOR_API_KEY}
 
 custom:
   env:
