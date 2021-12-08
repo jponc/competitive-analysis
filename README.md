@@ -2,5 +2,6 @@
 Go application to identify keyword competitiveness
 
 # Design
-![image](https://user-images.githubusercontent.com/4714727/143671567-f324c0cf-98e7-4a4c-80c4-d9bbb4a25088.png)
+![image](https://user-images.githubusercontent.com/4714727/145180282-4bf1226f-9780-41b7-a1a8-9ceafc28ec68.png)
+
 
