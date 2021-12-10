@@ -9,7 +9,7 @@ import (
 	"github.com/jponc/competitive-analysis/internal/repository/dbrepository"
 	"github.com/jponc/competitive-analysis/pkg/postgres"
 	"github.com/jponc/competitive-analysis/pkg/sns"
-	"github.com/jponc/competitive-analysis/pkg/textrazor"
+	"github.com/jponc/competitive-analysis/pkg/webscraper"
 
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -39,8 +39,8 @@ func main() {
 		Timeout: time.Duration(1 * time.Minute),
 	}
 
-	textrazorClient := textrazor.NewClient(config.TextRazorAPIKey, httpClient)
+	webscraperClient := webscraper.NewClient(httpClient)
 
-	service := crawler.NewService(textrazorClient, dbRepository, snsClient)
-	lambda.Start(service.TextRazorParseQueryJobURL)
+	service := crawler.NewService(webscraperClient, dbRepository, snsClient)
+	lambda.Start(service.WebScraperParseQueryJobURL)
 }

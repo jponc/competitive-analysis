@@ -33,7 +33,7 @@ type QueryItem struct {
 	Position        string     `db:"position"`
 	Title           string     `db:"title"`
 	URL             string     `db:"url"`
-	Body            string     `db:"body"`
+	Body            *string    `db:"body"`
 	ProcessedAt     *time.Time `db:"processed_at"`
 	CreatedAt       time.Time  `db:"created_at"`
 	ErrorProcessing bool       `db:"error_processing"`

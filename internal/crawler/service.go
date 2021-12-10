@@ -9,34 +9,34 @@ import (
 	"github.com/jponc/competitive-analysis/api/eventschema"
 	"github.com/jponc/competitive-analysis/internal/repository/dbrepository"
 	"github.com/jponc/competitive-analysis/pkg/sns"
-	"github.com/jponc/competitive-analysis/pkg/textrazor"
+	"github.com/jponc/competitive-analysis/pkg/webscraper"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type Service struct {
-	textRazorClient *textrazor.Client
-	repository      *dbrepository.Repository
-	snsClient       *sns.Client
+	webscraperClient *webscraper.Client
+	repository       *dbrepository.Repository
+	snsClient        *sns.Client
 }
 
-func NewService(textRazorClient *textrazor.Client, repository *dbrepository.Repository, snsClient *sns.Client) *Service {
+func NewService(webscraperClient *webscraper.Client, repository *dbrepository.Repository, snsClient *sns.Client) *Service {
 	s := &Service{
-		textRazorClient: textRazorClient,
-		repository:      repository,
-		snsClient:       snsClient,
+		webscraperClient: webscraperClient,
+		repository:       repository,
+		snsClient:        snsClient,
 	}
 
 	return s
 }
 
-func (s *Service) TextRazorParseQueryJobURL(ctx context.Context, snsEvent events.SNSEvent) {
+func (s *Service) WebScraperParseQueryJobURL(ctx context.Context, snsEvent events.SNSEvent) {
 	if s.repository == nil {
 		log.Fatalf("repository not defined")
 	}
 
-	if s.textRazorClient == nil {
-		log.Fatalf("textRazorClient not defined")
+	if s.webscraperClient == nil {
+		log.Fatalf("webscraperClient not defined")
 	}
 
 	if s.snsClient == nil {
@@ -63,17 +63,40 @@ func (s *Service) TextRazorParseQueryJobURL(ctx context.Context, snsEvent events
 		log.Fatalf("unable to convert query job id string to UUID: %v", err)
 	}
 
-	res, err := s.textRazorClient.Analyze(ctx, url, []textrazor.Extractor{})
+	queryItems, err := s.repository.GetQueryItemsFromUrl(ctx, queryJobID, url)
+	if err != nil {
+		log.Fatalf("unable to get query item id's: %v", err)
+	}
+
+	var queryItemIDs []uuid.UUID
+	for _, queryItem := range *queryItems {
+		queryItemIDs = append(queryItemIDs, queryItem.ID)
+	}
+
+	// Run scraping
+	res, err := s.webscraperClient.Scrape(ctx, url)
+
 	if err == nil {
-		err = s.repository.SetQueryItemsProcessedWithBody(ctx, queryJobID, url, res.CleanedText)
+		// Create links
+		for _, queryItemID := range queryItemIDs {
+			for _, link := range res.Links {
+				err = s.repository.CreateQueryLink(ctx, queryItemID, link.Text, link.LinkURL)
+				if err != nil {
+					log.Errorf("unable to create link: %v", err)
+				}
+			}
+		}
+
+		// Store Body
+		err = s.repository.SetQueryItemsProcessedWithBody(ctx, queryJobID, queryItemIDs, res.Body)
 	} else {
-		// don't panic if there's a URL that can't be processed by textrazor, just continue
-		log.Errorf("unable to request cleaned HTML with URL (%s) from textrazor: %v", url, err)
+		// don't panic if there's a URL that can't be processed , just continue
+		log.Errorf("unable to request cleaned HTML with URL (%s) from webscraper: %v", url, err)
 		err = s.repository.SetQueryItemsErrorProcessing(ctx, queryJobID, url)
 	}
 
 	if err != nil {
-		log.Fatalf("failed to process  query items for query job (%s) with url (%s)", queryJobID.String(), url)
+		log.Fatalf("failed to process query items for query job (%s) with url (%s): %v", queryJobID.String(), url, err)
 	}
 
 	// Publish DoneProcessingQueryJobURL message

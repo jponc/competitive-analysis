@@ -94,13 +94,13 @@ functions:
       ZENSERP_API_KEY: ${self:custom.env.ZENSERP_API_KEY}
       ZENSERP_BATCH_WEBHOOK_URL: ${self:custom.env.ZENSERP_BATCH_WEBHOOK_URL}
 
-  TextRazorParseQueryJobURL:
-    handler: bin/TextRazorParseQueryJobURL
+  WebScraperParseQueryJobURL:
+    handler: bin/WebScraperParseQueryJobURL
     memorySize: 256
     events:
       - sns: ${self:service}-${self:provider.stage}-ParseQueryJobURL
     timeout: 120 # 2 minutes timeout to run analysis from textrazor and save body of query item
-    reservedConcurrency: 2 # Added 2 concurrent lambda executions because of the current textrazor plan cap
+    reservedConcurrency: 15 # Added 2 concurrent lambda executions because of the current textrazor plan cap
     vpc: ${self:custom.vpc}
     environment:
       SNS_PREFIX: ${self:custom.env.SNS_PREFIX}

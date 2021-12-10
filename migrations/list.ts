@@ -89,6 +89,24 @@ const migrations = {
       ALTER TABLE query_item ALTER COLUMN body DROP NOT NULL;
     `);
   },
+  v09_create_link: async (client: Client) => {
+    await client.query(`
+      CREATE TABLE link
+        (
+           id             UUID DEFAULT uuid_generate_v4(),
+           query_item_id  UUID NOT NULL,
+           text           UUID NOT NULL,
+           url            TEXT NOT NULL,
+           PRIMARY KEY(id),
+           CONSTRAINT fk_query_item FOREIGN KEY(query_item_id) REFERENCES query_item(id)
+        );
+    `);
+  },
+  v10_update_text_to_text: async (client: Client) => {
+    await client.query(`
+      ALTER TABLE link ALTER COLUMN text TYPE TEXT;
+    `);
+  },
 };
 
 export default migrations;

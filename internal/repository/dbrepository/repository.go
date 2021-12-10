@@ -7,6 +7,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jponc/competitive-analysis/internal/types"
 	"github.com/jponc/competitive-analysis/pkg/postgres"
+	"github.com/lib/pq"
 )
 
 type Repository struct {
@@ -250,7 +251,31 @@ func (r *Repository) SetQueryItemsErrorProcessing(ctx context.Context, queryJobI
 	return nil
 }
 
-func (r *Repository) SetQueryItemsProcessedWithBody(ctx context.Context, queryJobID uuid.UUID, url string, body string) error {
+func (r *Repository) GetQueryItemsFromUrl(ctx context.Context, queryJobID uuid.UUID, url string) (*[]types.QueryItem, error) {
+	if r.dbClient == nil {
+		return nil, fmt.Errorf("dbClient not initialised")
+	}
+
+	queryItems := []types.QueryItem{}
+
+	err := r.dbClient.SelectContext(
+		ctx,
+		&queryItems,
+		`
+			SELECT *
+			FROM query_item
+			WHERE query_job_id = $1 AND url = $2
+		`, queryJobID, url,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get query items: %w", err)
+	}
+
+	return &queryItems, nil
+}
+
+func (r *Repository) SetQueryItemsProcessedWithBody(ctx context.Context, queryJobID uuid.UUID, queryItemIDs []uuid.UUID, body string) error {
 	if r.dbClient == nil {
 		return fmt.Errorf("dbClient not initialised")
 	}
@@ -260,12 +285,32 @@ func (r *Repository) SetQueryItemsProcessedWithBody(ctx context.Context, queryJo
 		`
 			UPDATE query_item
 			SET processed_at = now(), error_processing = false, body = $3
-			WHERE query_job_id = $1 and url = $2
-		`, queryJobID, url, body,
+			WHERE query_job_id = $1 and id = any($2)
+		`, queryJobID, pq.Array(queryItemIDs), body,
 	)
 
 	if err != nil {
 		return fmt.Errorf("failed to update query item error processing: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) CreateQueryLink(ctx context.Context, queryItemID uuid.UUID, text, url string) error {
+	if r.dbClient == nil {
+		return fmt.Errorf("dbClient not initialised")
+	}
+
+	_, err := r.dbClient.ExecContext(
+		ctx,
+		`
+			INSERT INTO link (query_item_id, text, url)
+			VALUES ($1, $2, $3)
+		`, queryItemID, text, url,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to create link: %w", err)
 	}
 
 	return nil
