@@ -7,12 +7,12 @@ import (
 )
 
 type QueryJob struct {
-	ID                    uuid.UUID  `db:"id"`
-	Keyword               string     `db:"keyword"`
-	CompletedAt           *time.Time `db:"completed_at"`
-	ZenserpBatchID        *string    `db:"zenserp_batch_id"`
-	ZenserpBatchProcessed bool       `db:"zenserp_batch_processed"`
-	CreatedAt             time.Time  `db:"created_at"`
+	ID                    uuid.UUID  `db:"id" json:"id"`
+	Keyword               string     `db:"keyword" json:"keyword"`
+	CompletedAt           *time.Time `db:"completed_at" json:"completed_at"`
+	ZenserpBatchID        *string    `db:"zenserp_batch_id" json:"zenserp_batch_id"`
+	ZenserpBatchProcessed bool       `db:"zenserp_batch_processed" json:"zenserp_batch_processed"`
+	CreatedAt             time.Time  `db:"created_at" json:"created_at"`
 }
 
 type QueryLocation struct {

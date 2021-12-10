@@ -360,3 +360,23 @@ func (r *Repository) MarkQueryJobAsComplete(ctx context.Context, queryJobID uuid
 
 	return nil
 }
+
+func (r *Repository) GetQueryJobs(ctx context.Context) (*[]types.QueryJob, error) {
+	if r.dbClient == nil {
+		return nil, fmt.Errorf("dbClient not initialised")
+	}
+
+	queryJobs := []types.QueryJob{}
+
+	err := r.dbClient.SelectContext(
+		ctx,
+		&queryJobs,
+		`SELECT * FROM query_job`,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get query jobs: %w", err)
+	}
+
+	return &queryJobs, nil
+}

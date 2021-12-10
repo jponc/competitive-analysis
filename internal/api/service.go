@@ -179,3 +179,23 @@ func (s *Service) ZenserpBatchWebhook(ctx context.Context, request events.APIGat
 
 	return lambdaresponses.Respond200(apischema.HealthcheckResponse{Status: "OK"})
 }
+
+func (s *Service) GetQueryJobs(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	if s.dbrepository == nil {
+		log.Errorf("dbrepository not defined")
+		return lambdaresponses.Respond500()
+	}
+
+	err := s.dbrepository.Connect()
+	if err != nil {
+		log.Errorf("error connecting to repository db: %v", err)
+		return lambdaresponses.Respond500()
+	}
+
+	queryJobs, err := s.dbrepository.GetQueryJobs(ctx)
+	if err != nil {
+		log.Fatalf("failed to get query jobs: %v", err)
+	}
+
+	return lambdaresponses.Respond200(apischema.GetQueryJobsResponse(queryJobs))
+}
