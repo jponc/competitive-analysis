@@ -4,6 +4,7 @@ variablesResolutionMode: 20210326
 
 plugins:
   - serverless-prune-plugin
+  - serverless-domain-manager
 package:
   patterns:
     - '!./**'
@@ -37,7 +38,7 @@ functions:
     handler: bin/Healthcheck
     events:
       - http:
-          path: /healthcheck
+          path: /Healthcheck
           method: get
           cors: true
 
@@ -129,3 +130,8 @@ custom:
   prune:
     automatic: true
     number: 2
+  customDomain:
+    domainName: ${ssm:/${self:service}/${self:provider.stage}/DOMAIN}
+    basePath: ''
+    stage: ${self:provider.stage}
+    createRoute53Record: true
