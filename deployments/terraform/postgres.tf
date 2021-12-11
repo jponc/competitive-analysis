@@ -23,8 +23,8 @@ resource "aws_rds_cluster" "postgres-sls-cluster" {
   scaling_configuration {
     auto_pause               = true
     max_capacity             = 32
-    min_capacity             = 2
-    seconds_until_auto_pause = 3600
+    min_capacity             = 4
+    seconds_until_auto_pause = 1800 // Shut down if there's no activity after 30 mins
     timeout_action           = "ForceApplyCapacityChange"
   }
 
