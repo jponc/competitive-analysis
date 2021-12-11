@@ -31,3 +31,21 @@ resource "aws_rds_cluster" "postgres-sls-cluster" {
   db_subnet_group_name   = aws_db_subnet_group.postgres_subnet_group.name
   vpc_security_group_ids = [data.aws_ssm_parameter.vpc_default_security_group_ssm.value]
 }
+
+# Secrets manager -- This enables secrets manager to store db credentials which will later be used to access the database through Data API
+resource "aws_secretsmanager_secret" "db_instance_credentials_secret" {
+  name        = "${var.service_name}-${var.environment}-secret"
+  description = ""
+}
+
+resource "aws_secretsmanager_secret_version" "db_instance_credentials_secret_values" {
+  secret_id     = aws_secretsmanager_secret.db_instance_credentials_secret.id
+  secret_string = jsonencode({
+    username: aws_rds_cluster.postgres-sls-cluster.master_username,
+    password: random_string.postgres_password.result,
+    engine: "postgres",
+    host: aws_rds_cluster.postgres-sls-cluster.endpoint,
+    port: 5432,
+    dbInstanceIdentifier: aws_rds_cluster.postgres-sls-cluster.id
+  })
+}
