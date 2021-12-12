@@ -97,6 +97,10 @@ func (s *Service) QueryJobZenserp(ctx context.Context, snsEvent events.SNSEvent)
 	if err != nil {
 		log.Fatalf("failed to set zenserp batch ID to query job: %v", err)
 	}
+
+	if err := s.repository.Close(); err != nil {
+		log.Fatalf("can't close DB connection")
+	}
 }
 
 func (s *Service) ZenserpBatchExtractResults(ctx context.Context, snsEvent events.SNSEvent) {
@@ -176,6 +180,10 @@ func (s *Service) ZenserpBatchExtractResults(ctx context.Context, snsEvent event
 		if err != nil {
 			log.Fatalf("failed to publish SNS: %v", err)
 		}
+	}
+
+	if err := s.repository.Close(); err != nil {
+		log.Fatalf("can't close DB connection")
 	}
 
 	log.Infof("done creating query items: query job id: %s, batchID: %s", queryJobID, zenserpBatchID)

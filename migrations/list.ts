@@ -107,6 +107,11 @@ const migrations = {
       ALTER TABLE link ALTER COLUMN text TYPE TEXT;
     `);
   },
+  v11_query_jobs_created_at_idx: async (client: Client) => {
+    await client.query(`
+      CREATE INDEX query_job_created_at_desc_idx ON query_job (created_at DESC);
+    `);
+  },
 };
 
 export default migrations;

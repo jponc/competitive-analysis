@@ -15,3 +15,6 @@ type CreateQueryJobResponse struct {
 }
 
 type GetQueryJobsResponse *[]types.QueryJob
+type GetQueryJobResponse *types.QueryJob
+type GetQueryJobPositionHits *[]types.QueryJobPositionHit
+type GetQueryJobUrlInfo *types.UrlInfo

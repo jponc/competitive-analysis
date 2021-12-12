@@ -6,9 +6,11 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/gofrs/uuid"
 	"github.com/jponc/competitive-analysis/api/apischema"
 	"github.com/jponc/competitive-analysis/api/eventschema"
 	"github.com/jponc/competitive-analysis/internal/repository/dbrepository"
+	"github.com/jponc/competitive-analysis/internal/types"
 	"github.com/jponc/competitive-analysis/pkg/lambdaresponses"
 	"github.com/jponc/competitive-analysis/pkg/sns"
 	"github.com/jponc/competitive-analysis/pkg/zenserp"
@@ -32,7 +34,7 @@ var queryConfigDefaults = QueryConfig{
 		"Denton,North Carolina,United States",
 		"Kingfield,Maine,United States",
 	},
-	Num:          "50",
+	Num:          "100",
 	Device:       "desktop",
 	SearchEngine: "google.com",
 }
@@ -106,6 +108,10 @@ func (s *Service) CreateQueryJob(ctx context.Context, request events.APIGatewayP
 			return lambdaresponses.Respond500()
 		}
 
+		if err := s.dbrepository.Close(); err != nil {
+			log.Fatalf("can't close DB connection")
+		}
+
 		log.Infof("keyword: %s, location: %s", queryJobID, location)
 	}
 
@@ -177,6 +183,10 @@ func (s *Service) ZenserpBatchWebhook(ctx context.Context, request events.APIGat
 		}
 	}
 
+	if err := s.dbrepository.Close(); err != nil {
+		log.Fatalf("can't close DB connection")
+	}
+
 	return lambdaresponses.Respond200(apischema.HealthcheckResponse{Status: "OK"})
 }
 
@@ -197,5 +207,119 @@ func (s *Service) GetQueryJobs(ctx context.Context, request events.APIGatewayPro
 		log.Fatalf("failed to get query jobs: %v", err)
 	}
 
+	if err := s.dbrepository.Close(); err != nil {
+		log.Fatalf("can't close DB connection")
+	}
+
 	return lambdaresponses.Respond200(apischema.GetQueryJobsResponse(queryJobs))
+}
+
+func (s *Service) GetQueryJob(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	if s.dbrepository == nil {
+		log.Errorf("dbrepository not defined")
+		return lambdaresponses.Respond500()
+	}
+
+	id, found := request.PathParameters["id"]
+	if !found {
+		log.Fatalf("failed to get id path parameter")
+	}
+
+	queryJobId := uuid.FromStringOrNil(id)
+
+	err := s.dbrepository.Connect()
+	if err != nil {
+		log.Errorf("error connecting to repository db: %v", err)
+		return lambdaresponses.Respond500()
+	}
+
+	queryJob, err := s.dbrepository.GetQueryJob(ctx, queryJobId)
+	if err != nil {
+		log.Fatalf("failed to get query job: %v", err)
+	}
+
+	if err := s.dbrepository.Close(); err != nil {
+		log.Fatalf("can't close DB connection")
+	}
+
+	return lambdaresponses.Respond200(apischema.GetQueryJobResponse(queryJob))
+}
+
+func (s *Service) GetQueryJobPositionHits(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	if s.dbrepository == nil {
+		log.Errorf("dbrepository not defined")
+		return lambdaresponses.Respond500()
+	}
+
+	id, found := request.PathParameters["id"]
+	if !found {
+		log.Fatalf("failed to get id path parameter")
+	}
+
+	queryJobId := uuid.FromStringOrNil(id)
+
+	err := s.dbrepository.Connect()
+	if err != nil {
+		log.Errorf("error connecting to repository db: %v", err)
+		return lambdaresponses.Respond500()
+	}
+
+	queryJobPositionHits, err := s.dbrepository.GetQueryJobPositionHits(ctx, queryJobId)
+	if err != nil {
+		log.Fatalf("failed to get query job position hits: %v", err)
+	}
+
+	if err := s.dbrepository.Close(); err != nil {
+		log.Fatalf("can't close DB connection")
+	}
+
+	return lambdaresponses.Respond200(apischema.GetQueryJobPositionHits(queryJobPositionHits))
+}
+
+func (s *Service) GetQueryJobUrlInfo(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	if s.dbrepository == nil {
+		log.Errorf("dbrepository not defined")
+		return lambdaresponses.Respond500()
+	}
+
+	id, found := request.PathParameters["id"]
+	if !found {
+		log.Fatalf("failed to get id path parameter")
+	}
+
+	url, found := request.QueryStringParameters["url"]
+	if !found {
+		log.Fatalf("failed to get url query parameter")
+	}
+
+	queryJobId := uuid.FromStringOrNil(id)
+
+	err := s.dbrepository.Connect()
+	if err != nil {
+		log.Errorf("error connecting to repository db: %v", err)
+		return lambdaresponses.Respond500()
+	}
+
+	queryItem, err := s.dbrepository.GetQueryItemUsingJobIdAndUrl(ctx, queryJobId, url)
+	if err != nil {
+		log.Fatalf("failed to get query item: %v", err)
+	}
+
+	links, err := s.dbrepository.GetQueryItemLinks(ctx, queryItem.ID)
+	if err != nil {
+		log.Fatalf("failed to get query item links: %v", err)
+	}
+
+	urlInfo := types.UrlInfo{
+		Title: queryItem.Title,
+		URL:   queryItem.URL,
+		Body:  *queryItem.Body,
+		Links: *links,
+	}
+
+	if err := s.dbrepository.Close(); err != nil {
+		log.Fatalf("can't close DB connection")
+	}
+
+	return lambdaresponses.Respond200(apischema.GetQueryJobUrlInfo(&urlInfo))
 }

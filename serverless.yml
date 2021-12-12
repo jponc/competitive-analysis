@@ -38,7 +38,7 @@ functions:
     handler: bin/Healthcheck
     events:
       - http:
-          path: /Healthcheck
+          path: /healthcheck
           method: get
           cors: true
 
@@ -46,7 +46,7 @@ functions:
     handler: bin/CreateQueryJob
     events:
       - http:
-          path: /CreateQueryJob
+          path: /query-jobs
           method: post
           cors: true
     vpc: ${self:custom.vpc}
@@ -58,9 +58,56 @@ functions:
     handler: bin/GetQueryJobs
     events:
       - http:
-          path: /GetQueryJobs
+          path: /query-jobs
           method: get
           cors: true
+    vpc: ${self:custom.vpc}
+    environment:
+      DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
+
+  GetQueryJob:
+    handler: bin/GetQueryJob
+    events:
+      - http:
+          path: /query-jobs/{id}
+          method: get
+          cors: true
+          request:
+            parameters:
+              paths:
+                id: true
+    vpc: ${self:custom.vpc}
+    environment:
+      DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
+
+  GetQueryJobPositionHits:
+    handler: bin/GetQueryJobPositionHits
+    events:
+      - http:
+          path: /query-jobs/{id}/position-hits
+          method: get
+          cors: true
+          request:
+            parameters:
+              paths:
+                id: true
+    vpc: ${self:custom.vpc}
+    environment:
+      DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
+
+  GetQueryJobUrlInfo:
+    handler: bin/GetQueryJobUrlInfo
+    events:
+      - http:
+          path: /query-jobs/{id}/url-info
+          method: get
+          cors: true
+          request:
+            parameters:
+              paths:
+                id: true
+              querystrings:
+                url: true
     vpc: ${self:custom.vpc}
     environment:
       DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
@@ -111,7 +158,7 @@ functions:
     events:
       - sns: ${self:service}-${self:provider.stage}-ParseQueryJobURL
     timeout: 120 # 2 minutes timeout to run analysis from textrazor and save body of query item
-    reservedConcurrency: 2 # Added 2 concurrent lambda executions because of the current textrazor plan cap
+    reservedConcurrency: 15 # Used 15 concurrent lambda executions
     vpc: ${self:custom.vpc}
     environment:
       SNS_PREFIX: ${self:custom.env.SNS_PREFIX}

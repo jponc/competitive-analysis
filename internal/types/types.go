@@ -38,3 +38,21 @@ type QueryItem struct {
 	CreatedAt       time.Time  `db:"created_at"`
 	ErrorProcessing bool       `db:"error_processing"`
 }
+
+type QueryJobPositionHit struct {
+	AvgPosition       float32 `db:"avg_position" json:"avg_position"`
+	URL               string  `db:"url" json:"url"`
+	LocationHitsCount int     `db:"location_hits_count" json:"location_hits_count"`
+}
+
+type UrlInfo struct {
+	Title string `json:"title"`
+	URL   string `json:"url"`
+	Body  string `json:"body"`
+	Links []Link `json:"links"`
+}
+
+type Link struct {
+	Text string `db:"text" json:"text"`
+	URL  string `db:"url" json:"url"`
+}

@@ -112,6 +112,10 @@ func (s *Service) WebScraperParseQueryJobURL(ctx context.Context, snsEvent event
 
 	// Send request to textrazor to extract the content
 	log.Infof("Done processing (%s), url: (%s)", queryJobID.String(), url)
+
+	if err := s.repository.Close(); err != nil {
+		log.Fatalf("can't close DB connection")
+	}
 }
 
 func (s *Service) CheckCompletedQueryJobs(ctx context.Context, snsEvent events.SNSEvent) {
@@ -155,4 +159,8 @@ func (s *Service) CheckCompletedQueryJobs(ctx context.Context, snsEvent events.S
 	}
 
 	log.Infof("Marked query job %s as complete", queryJobID.String())
+
+	if err := s.repository.Close(); err != nil {
+		log.Fatalf("can't close DB connection")
+	}
 }

@@ -30,6 +30,10 @@ func (r *Repository) Connect() error {
 	return r.dbClient.Connect()
 }
 
+func (r *Repository) Close() error {
+	return r.dbClient.Close()
+}
+
 func (r *Repository) CreateQueryJob(ctx context.Context, keyword string) (uuid.UUID, error) {
 	if r.dbClient == nil {
 		return uuid.Nil, fmt.Errorf("dbClient not initialised")
@@ -230,6 +234,31 @@ func (r *Repository) GetQueryItem(ctx context.Context, id uuid.UUID) (*types.Que
 	return &queryItem, nil
 }
 
+func (r *Repository) GetQueryItemUsingJobIdAndUrl(ctx context.Context, queryJobID uuid.UUID, url string) (*types.QueryItem, error) {
+	if r.dbClient == nil {
+		return nil, fmt.Errorf("dbClient not initialised")
+	}
+
+	queryItem := types.QueryItem{}
+
+	err := r.dbClient.GetContext(
+		ctx,
+		&queryItem,
+		`
+			SELECT *
+			FROM query_item
+			WHERE query_job_id = $1 AND url = $2
+			LIMIT 1
+		`, queryJobID, url,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get query item: %w", err)
+	}
+
+	return &queryItem, nil
+}
+
 func (r *Repository) SetQueryItemsErrorProcessing(ctx context.Context, queryJobID uuid.UUID, url string) error {
 	if r.dbClient == nil {
 		return fmt.Errorf("dbClient not initialised")
@@ -371,7 +400,7 @@ func (r *Repository) GetQueryJobs(ctx context.Context) (*[]types.QueryJob, error
 	err := r.dbClient.SelectContext(
 		ctx,
 		&queryJobs,
-		`SELECT * FROM query_job`,
+		`SELECT * FROM query_job ORDER BY created_at DESC`,
 	)
 
 	if err != nil {
@@ -379,4 +408,55 @@ func (r *Repository) GetQueryJobs(ctx context.Context) (*[]types.QueryJob, error
 	}
 
 	return &queryJobs, nil
+}
+
+func (r *Repository) GetQueryJobPositionHits(ctx context.Context, queryJobID uuid.UUID) (*[]types.QueryJobPositionHit, error) {
+	if r.dbClient == nil {
+		return nil, fmt.Errorf("dbClient not initialised")
+	}
+
+	positionHits := []types.QueryJobPositionHit{}
+
+	err := r.dbClient.SelectContext(
+		ctx,
+		&positionHits,
+		`
+			SELECT AVG(position)::numeric(10,2) as avg_position, url, count(*) as location_hits_count
+			FROM query_item
+			WHERE query_job_id = $1
+			GROUP BY query_job_id, url
+			HAVING count(*) >= 3
+			ORDER BY AVG(position) ASC
+		`,
+		queryJobID)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get query job position hits: %v", err)
+	}
+
+	return &positionHits, nil
+}
+
+func (r *Repository) GetQueryItemLinks(ctx context.Context, queryItemID uuid.UUID) (*[]types.Link, error) {
+	if r.dbClient == nil {
+		return nil, fmt.Errorf("dbClient not initialised")
+	}
+
+	links := []types.Link{}
+
+	err := r.dbClient.SelectContext(
+		ctx,
+		&links,
+		`
+			SELECT text, url
+			FROM link
+			WHERE query_item_id = $1
+		`,
+		queryItemID)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get query item links: %v", err)
+	}
+
+	return &links, nil
 }
