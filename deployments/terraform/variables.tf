@@ -44,3 +44,8 @@ variable "appextend_hosted_zone_id_ssm_path" {
   type        = string
   description = "Appextend Route 53 Hosted Zone ID Path"
 }
+
+variable "frontend_url" {
+  type        = string
+  description = "Frontend URL"
+}

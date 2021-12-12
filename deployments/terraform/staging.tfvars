@@ -14,6 +14,6 @@ vpc_default_security_group_ssm_path = "/uptactics/staging/DEFAULT_SECURITY_GROUP
 domain_ssm_value = "api-staging-competitive-analysis.appextend.com"
 
 # Frontend
-frontend_url                       = "competitive-analysis-staging.appextend.com"
+frontend_url                       = "seo-tool-staging.appextend.com"
 appextend_hosted_zone_id_ssm_path  = "/uptactics/APPEXTEND_HOSTED_ZONE_ID"
 appextend_certificate_arn_ssm_path = "/uptactics/APPEXTEND_CERTIFICATE_ARN"
