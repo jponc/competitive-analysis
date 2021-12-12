@@ -112,6 +112,16 @@ const migrations = {
       CREATE INDEX query_job_created_at_desc_idx ON query_job (created_at DESC);
     `);
   },
+  v12_add_query_item_idx: async (client: Client) => {
+    await client.query(`
+      CREATE INDEX query_item_qj_id_url_idx ON query_item (query_job_id, url);
+    `);
+  },
+  v13_add_query_item_id_idx: async (client: Client) => {
+    await client.query(`
+      CREATE INDEX link_query_item_id_idx ON link (query_item_id);
+    `);
+  },
 };
 
 export default migrations;
