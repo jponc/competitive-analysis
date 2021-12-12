@@ -108,10 +108,6 @@ func (s *Service) CreateQueryJob(ctx context.Context, request events.APIGatewayP
 			return lambdaresponses.Respond500()
 		}
 
-		if err := s.dbrepository.Close(); err != nil {
-			log.Fatalf("can't close DB connection")
-		}
-
 		log.Infof("keyword: %s, location: %s", queryJobID, location)
 	}
 
@@ -124,6 +120,10 @@ func (s *Service) CreateQueryJob(ctx context.Context, request events.APIGatewayP
 	if err != nil {
 		log.Errorf("failed to publish SNS: %v", err)
 		return lambdaresponses.Respond500()
+	}
+
+	if err := s.dbrepository.Close(); err != nil {
+		log.Fatalf("can't close DB connection")
 	}
 
 	return lambdaresponses.Respond200(apischema.CreateQueryJobResponse{QueryJobID: queryJobID.String()})
