@@ -3,6 +3,7 @@ package webscraper
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"strings"
 
@@ -71,11 +72,19 @@ func (c *Client) Scrape(ctx context.Context, link string) (*ScrapeResult, error)
 	doc.Find("a[href]").Each(func(index int, item *goquery.Selection) {
 		linkURL, _ := item.Attr("href")
 		text := strings.TrimSpace(item.Text())
-		links = append(links, Link{
-			Text:    text,
-			LinkURL: linkURL,
-		})
+
+		if text != "" && !strings.Contains(linkURL, "javascript") {
+			links = append(links, Link{
+				Text:    text,
+				LinkURL: linkURL,
+			})
+		}
 	})
+
+	// Trim links size to 2k max
+	linksLength := float64(len(links))
+	maxLinksLength := int(math.Min(linksLength, 2000))
+	links = links[:maxLinksLength]
 
 	// description
 	description := ""

@@ -58,6 +58,8 @@ func (s *Service) WebScraperParseQueryJobURL(ctx context.Context, snsEvent event
 
 	url := msg.URL
 
+	log.Infof("Processing URL: %s", url)
+
 	queryJobID, err := uuid.FromString(msg.QueryJobID)
 	if err != nil {
 		log.Fatalf("unable to convert query job id string to UUID: %v", err)
@@ -82,7 +84,7 @@ func (s *Service) WebScraperParseQueryJobURL(ctx context.Context, snsEvent event
 			for _, link := range res.Links {
 				err = s.repository.CreateQueryLink(ctx, queryItemID, link.Text, link.LinkURL)
 				if err != nil {
-					log.Errorf("unable to create link: %v", err)
+					log.Infof("unable to create link: %v", err)
 				}
 			}
 		}

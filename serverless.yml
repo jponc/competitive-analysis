@@ -157,7 +157,7 @@ functions:
     memorySize: 256
     events:
       - sns: ${self:service}-${self:provider.stage}-ParseQueryJobURL
-    timeout: 120 # 2 minutes timeout to run analysis from textrazor and save body of query item
+    timeout: 600 # 10 minutes timeout to run analysis from textrazor and save body of query item
     reservedConcurrency: 15 # Used 15 concurrent lambda executions
     vpc: ${self:custom.vpc}
     environment:

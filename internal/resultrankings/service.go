@@ -180,6 +180,8 @@ func (s *Service) ZenserpBatchExtractResults(ctx context.Context, snsEvent event
 		if err != nil {
 			log.Fatalf("failed to publish SNS: %v", err)
 		}
+
+		log.Infof("Published URL: %s", url)
 	}
 
 	if err := s.repository.Close(); err != nil {

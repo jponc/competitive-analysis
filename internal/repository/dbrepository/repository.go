@@ -3,6 +3,7 @@ package dbrepository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/gofrs/uuid"
 	"github.com/jponc/competitive-analysis/internal/types"
@@ -309,6 +310,9 @@ func (r *Repository) SetQueryItemsProcessedWithBody(ctx context.Context, queryJo
 		return fmt.Errorf("dbClient not initialised")
 	}
 
+	// Remove non UTF8
+	body = strings.ToValidUTF8(body, "")
+
 	_, err := r.dbClient.ExecContext(
 		ctx,
 		`
@@ -319,7 +323,7 @@ func (r *Repository) SetQueryItemsProcessedWithBody(ctx context.Context, queryJo
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to update query item error processing: %w", err)
+		return fmt.Errorf("failed to update query item error processing true with body: %w", err)
 	}
 
 	return nil
@@ -339,7 +343,7 @@ func (r *Repository) CreateQueryLink(ctx context.Context, queryItemID uuid.UUID,
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to create link: %w", err)
+		return fmt.Errorf("failed to create link: %w, %s, %s", err, text, url)
 	}
 
 	return nil
