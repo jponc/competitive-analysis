@@ -27,6 +27,8 @@ export const handler = async () => {
     }
 
   }
+
+  process.exit()
 }
 
 const getCurrentMigratedNames = async (client: Client): Promise<string[]> => {

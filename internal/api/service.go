@@ -12,7 +12,6 @@ import (
 	"github.com/jponc/competitive-analysis/internal/repository/dbrepository"
 	"github.com/jponc/competitive-analysis/internal/types"
 	"github.com/jponc/competitive-analysis/pkg/lambdaresponses"
-	"github.com/jponc/competitive-analysis/pkg/sns"
 	"github.com/jponc/competitive-analysis/pkg/zenserp"
 	log "github.com/sirupsen/logrus"
 )
@@ -39,13 +38,17 @@ var queryConfigDefaults = QueryConfig{
 	SearchEngine: "google.com",
 }
 
+type SNSClient interface {
+	Publish(ctx context.Context, topic string, message interface{}) error
+}
+
 type Service struct {
 	dbrepository  *dbrepository.Repository
-	snsClient     *sns.Client
+	snsClient     SNSClient
 	zenserpClient *zenserp.Client
 }
 
-func NewService(dbrepository *dbrepository.Repository, snsClient *sns.Client, zenserpClient *zenserp.Client) *Service {
+func NewService(dbrepository *dbrepository.Repository, snsClient SNSClient, zenserpClient *zenserp.Client) *Service {
 	s := &Service{
 		dbrepository:  dbrepository,
 		snsClient:     snsClient,
@@ -159,7 +162,7 @@ func (s *Service) ZenserpBatchWebhook(ctx context.Context, request events.APIGat
 	for _, queryJob := range *unprocessedQueryJobs {
 		batch, err := s.zenserpClient.GetBatch(ctx, *queryJob.ZenserpBatchID)
 		if err != nil {
-			log.Fatal("failed to get batch %s: %v", queryJob.ZenserpBatchID, err)
+			log.Fatalf("failed to get batch %s: %v", *queryJob.ZenserpBatchID, err)
 		}
 
 		// if zenserp batch state is notified meaning it's done, we send an SNS message to process this batch

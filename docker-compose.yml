@@ -1,0 +1,30 @@
+version: "3.4"
+
+services:
+  postgres:
+    image: postgres:10
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mydatabase
+    ports:
+      - 5432:5432
+
+  migration:
+    build:
+      context: ./migrations/
+      dockerfile: ./MigrationDockerfile
+    command: "./run_migration.sh"
+    environment:
+      DB_CONN_URL: postgres://postgres:postgres@postgres/mydatabase?sslmode=disable
+
+  integration:
+    build:
+      context: .
+      dockerfile: ./IntegrationDockerfile
+    environment:
+      DB_CONN_URL: postgres://postgres:postgres@postgres/mydatabase?sslmode=disable
+    command: "./run_integration.sh"
+    depends_on:
+      - "migration"
+      - "postgres"

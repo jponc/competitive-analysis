@@ -1,0 +1,13 @@
+FROM node:12 as base
+
+WORKDIR /home/node/app
+
+RUN npm install -g typescript
+RUN npm install -g ts-node
+
+COPY ./package*.json ./
+
+RUN npm i
+
+COPY ./*ts ./
+COPY ./run_migration.sh .

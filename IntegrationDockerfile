@@ -1,0 +1,7 @@
+FROM golang:1.17
+
+WORKDIR /opt/app
+
+COPY . .
+
+RUN go mod tidy
