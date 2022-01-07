@@ -235,7 +235,7 @@ func (r *Repository) GetQueryItem(ctx context.Context, id uuid.UUID) (*types.Que
 	return &queryItem, nil
 }
 
-func (r *Repository) GetQueryItemUsingJobIdAndUrl(ctx context.Context, queryJobID uuid.UUID, url string) (*types.QueryItem, error) {
+func (r *Repository) GetQueryItemUsingJobIDAndUrl(ctx context.Context, queryJobID uuid.UUID, url string) (*types.QueryItem, error) {
 	if r.dbClient == nil {
 		return nil, fmt.Errorf("dbClient not initialised")
 	}
@@ -463,4 +463,17 @@ func (r *Repository) GetQueryItemLinks(ctx context.Context, queryItemID uuid.UUI
 	}
 
 	return &links, nil
+}
+
+func (r *Repository) DeleteQueryJob(ctx context.Context, queryJobID uuid.UUID) error {
+	if r.dbClient == nil {
+		return fmt.Errorf("dbClient not initialised")
+	}
+
+	_, err := r.dbClient.ExecContext(ctx, `DELETE FROM query_job WHERE id = $1`, queryJobID)
+	if err != nil {
+		return fmt.Errorf("failed to delete query job: %v", err)
+	}
+
+	return nil
 }

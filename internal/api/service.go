@@ -132,6 +132,34 @@ func (s *Service) CreateQueryJob(ctx context.Context, request events.APIGatewayP
 	return lambdaresponses.Respond200(apischema.CreateQueryJobResponse{QueryJobID: queryJobID.String()})
 }
 
+func (s *Service) DeleteQueryJob(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	if s.dbrepository == nil {
+		log.Errorf("dbrepository not defined")
+		return lambdaresponses.Respond500()
+	}
+
+	id, found := request.PathParameters["id"]
+	if !found {
+		log.Fatalf("failed to get id path parameter")
+	}
+
+	queryJobID := uuid.FromStringOrNil(id)
+
+	err := s.dbrepository.Connect()
+	if err != nil {
+		log.Errorf("error connecting to repository db: %v", err)
+		return lambdaresponses.Respond500()
+	}
+
+	err = s.dbrepository.DeleteQueryJob(ctx, queryJobID)
+	if err != nil {
+		log.Errorf("error deleting query job: %v", err)
+		return lambdaresponses.Respond500()
+	}
+
+	return lambdaresponses.Respond200(apischema.DeleteQueryJobResponse{Message: "deleted"})
+}
+
 func (s *Service) ZenserpBatchWebhook(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	if s.dbrepository == nil {
 		log.Errorf("dbrepository not defined")
@@ -228,7 +256,7 @@ func (s *Service) GetQueryJob(ctx context.Context, request events.APIGatewayProx
 		log.Fatalf("failed to get id path parameter")
 	}
 
-	queryJobId := uuid.FromStringOrNil(id)
+	queryJobID := uuid.FromStringOrNil(id)
 
 	err := s.dbrepository.Connect()
 	if err != nil {
@@ -236,7 +264,7 @@ func (s *Service) GetQueryJob(ctx context.Context, request events.APIGatewayProx
 		return lambdaresponses.Respond500()
 	}
 
-	queryJob, err := s.dbrepository.GetQueryJob(ctx, queryJobId)
+	queryJob, err := s.dbrepository.GetQueryJob(ctx, queryJobID)
 	if err != nil {
 		log.Fatalf("failed to get query job: %v", err)
 	}
@@ -259,7 +287,7 @@ func (s *Service) GetQueryJobPositionHits(ctx context.Context, request events.AP
 		log.Fatalf("failed to get id path parameter")
 	}
 
-	queryJobId := uuid.FromStringOrNil(id)
+	queryJobID := uuid.FromStringOrNil(id)
 
 	err := s.dbrepository.Connect()
 	if err != nil {
@@ -267,7 +295,7 @@ func (s *Service) GetQueryJobPositionHits(ctx context.Context, request events.AP
 		return lambdaresponses.Respond500()
 	}
 
-	queryJobPositionHits, err := s.dbrepository.GetQueryJobPositionHits(ctx, queryJobId)
+	queryJobPositionHits, err := s.dbrepository.GetQueryJobPositionHits(ctx, queryJobID)
 	if err != nil {
 		log.Fatalf("failed to get query job position hits: %v", err)
 	}
@@ -295,7 +323,7 @@ func (s *Service) GetQueryJobUrlInfo(ctx context.Context, request events.APIGate
 		log.Fatalf("failed to get url query parameter")
 	}
 
-	queryJobId := uuid.FromStringOrNil(id)
+	queryJobID := uuid.FromStringOrNil(id)
 
 	err := s.dbrepository.Connect()
 	if err != nil {
@@ -303,7 +331,7 @@ func (s *Service) GetQueryJobUrlInfo(ctx context.Context, request events.APIGate
 		return lambdaresponses.Respond500()
 	}
 
-	queryItem, err := s.dbrepository.GetQueryItemUsingJobIdAndUrl(ctx, queryJobId, url)
+	queryItem, err := s.dbrepository.GetQueryItemUsingJobIDAndUrl(ctx, queryJobID, url)
 	if err != nil {
 		log.Fatalf("failed to get query item: %v", err)
 	}

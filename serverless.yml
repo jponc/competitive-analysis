@@ -80,6 +80,21 @@ functions:
     environment:
       DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
 
+  DeleteQueryJob:
+    handler: bin/DeleteQueryJob
+    events:
+      - http:
+          path: /query-jobs/{id}
+          method: delete
+          cors: true
+          request:
+            parameters:
+              paths:
+                id: true
+    vpc: ${self:custom.vpc}
+    environment:
+      DB_CONN_URL: ${self:custom.env.DB_CONN_URL}
+
   GetQueryJobPositionHits:
     handler: bin/GetQueryJobPositionHits
     events:

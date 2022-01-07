@@ -14,6 +14,10 @@ type CreateQueryJobResponse struct {
 	QueryJobID string `json:"query_job_id"`
 }
 
+type DeleteQueryJobResponse struct {
+	Message string `json:"message"`
+}
+
 type GetQueryJobsResponse *[]types.QueryJob
 type GetQueryJobResponse *types.QueryJob
 type GetQueryJobPositionHits *[]types.QueryJobPositionHit
