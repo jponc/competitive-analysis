@@ -122,6 +122,34 @@ const migrations = {
       CREATE INDEX link_query_item_id_idx ON link (query_item_id);
     `);
   },
+  v14_add_delete_cascade_link: async (client: Client) => {
+    await client.query(`
+      ALTER TABLE link
+      DROP CONSTRAINT fk_query_item,
+      ADD CONSTRAINT fk_query_item FOREIGN KEY (query_item_id) REFERENCES query_item(id) ON DELETE CASCADE;
+    `);
+  },
+  v15_add_delete_cascade_query_item_location: async (client: Client) => {
+    await client.query(`
+      ALTER TABLE query_item
+      DROP CONSTRAINT fk_query_location,
+      ADD CONSTRAINT fk_query_location FOREIGN KEY (query_location_id) REFERENCES query_location(id) ON DELETE CASCADE;
+    `);
+  },
+  v16_add_delete_cascade_query_item_job: async (client: Client) => {
+    await client.query(`
+      ALTER TABLE query_item
+      DROP CONSTRAINT fk_query_job,
+      ADD CONSTRAINT fk_query_job FOREIGN KEY (query_job_id) REFERENCES query_job(id) ON DELETE CASCADE;
+    `);
+  },
+  v17_add_delete_cascade_query_location_job: async (client: Client) => {
+    await client.query(`
+      ALTER TABLE query_location
+      DROP CONSTRAINT fk_query_job,
+      ADD CONSTRAINT fk_query_job FOREIGN KEY (query_job_id) REFERENCES query_job(id) ON DELETE CASCADE;
+    `);
+  },
 };
 
 export default migrations;

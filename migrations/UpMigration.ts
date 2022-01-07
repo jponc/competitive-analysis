@@ -28,7 +28,9 @@ export const handler = async () => {
 
   }
 
-  process.exit()
+  if (process.env.IN_LAMBDA !== "true") {
+    process.exit(0)
+  }
 }
 
 const getCurrentMigratedNames = async (client: Client): Promise<string[]> => {
