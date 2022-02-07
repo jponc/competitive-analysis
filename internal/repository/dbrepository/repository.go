@@ -51,7 +51,6 @@ func (r *Repository) CreateQueryJob(ctx context.Context, keyword string) (uuid.U
 			RETURNING id
 		`,
 		keyword)
-
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to insert query job: %v", err)
 	}
@@ -75,7 +74,6 @@ func (r *Repository) GetQueryJob(ctx context.Context, id uuid.UUID) (*types.Quer
 			WHERE id = $1
 		`,
 		id)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get query job: %v", err)
 	}
@@ -99,7 +97,6 @@ func (r *Repository) CreateQueryLocation(ctx context.Context, queryJobID, device
 			RETURNING id
 		`,
 		queryJobID, device, searchEngine, num, country, location)
-
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to insert query location: %v", err)
 	}
@@ -119,7 +116,6 @@ func (r *Repository) GetQueryLocations(ctx context.Context, queryJobID uuid.UUID
 		&queryLocations,
 		`SELECT * FROM query_location WHERE query_job_id = $1`, queryJobID,
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get query locations: %w", err)
 	}
@@ -140,7 +136,6 @@ func (r *Repository) SetZenserpBatchToQueryJob(ctx context.Context, queryJobID u
 			WHERE id = $2
 		`, zenserpBatchID, queryJobID,
 	)
-
 	if err != nil {
 		return fmt.Errorf("failed to update queryjob with zenserp batch id: %w", err)
 	}
@@ -160,7 +155,6 @@ func (r *Repository) GetUnprocessedQueryJobs(ctx context.Context) (*[]types.Quer
 		&queryJobs,
 		`SELECT * FROM query_job WHERE zenserp_batch_processed = false AND zenserp_batch_id IS NOT NULL`,
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get query locations: %w", err)
 	}
@@ -181,7 +175,6 @@ func (r *Repository) ProcessQueryJob(ctx context.Context, queryJobID uuid.UUID) 
 			WHERE id = $1
 		`, queryJobID,
 	)
-
 	if err != nil {
 		return fmt.Errorf("failed to update queryjob with zenserp batch id: %w", err)
 	}
@@ -205,7 +198,6 @@ func (r *Repository) CreateQueryItem(ctx context.Context, queryJobID uuid.UUID, 
 			RETURNING id
 		`, queryJobID, queryLocationID, position, url, title,
 	)
-
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to create query item: %w", err)
 	}
@@ -227,7 +219,6 @@ func (r *Repository) GetQueryItem(ctx context.Context, id uuid.UUID) (*types.Que
 			SELECT * FROM query_item where id = $1
 		`, id,
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get query item: %w", err)
 	}
@@ -252,7 +243,6 @@ func (r *Repository) GetQueryItemUsingJobIDAndUrl(ctx context.Context, queryJobI
 			LIMIT 1
 		`, queryJobID, url,
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get query item: %w", err)
 	}
@@ -273,7 +263,6 @@ func (r *Repository) SetQueryItemsErrorProcessing(ctx context.Context, queryJobI
 			WHERE query_job_id = $1 and url = $2
 		`, queryJobID, url,
 	)
-
 	if err != nil {
 		return fmt.Errorf("failed to update query item error processing: %w", err)
 	}
@@ -297,7 +286,6 @@ func (r *Repository) GetQueryItemsFromUrl(ctx context.Context, queryJobID uuid.U
 			WHERE query_job_id = $1 AND url = $2
 		`, queryJobID, url,
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get query items: %w", err)
 	}
@@ -305,7 +293,7 @@ func (r *Repository) GetQueryItemsFromUrl(ctx context.Context, queryJobID uuid.U
 	return &queryItems, nil
 }
 
-func (r *Repository) SetQueryItemsProcessedWithBody(ctx context.Context, queryJobID uuid.UUID, queryItemIDs []uuid.UUID, body string) error {
+func (r *Repository) SetQueryItemsProcessedWithBodyAndTitle(ctx context.Context, queryJobID uuid.UUID, queryItemIDs []uuid.UUID, body string, title string) error {
 	if r.dbClient == nil {
 		return fmt.Errorf("dbClient not initialised")
 	}
@@ -317,11 +305,10 @@ func (r *Repository) SetQueryItemsProcessedWithBody(ctx context.Context, queryJo
 		ctx,
 		`
 			UPDATE query_item
-			SET processed_at = now(), error_processing = false, body = $3
+			SET processed_at = now(), error_processing = false, body = $3, title = $4
 			WHERE query_job_id = $1 and id = any($2)
-		`, queryJobID, pq.Array(queryItemIDs), body,
+		`, queryJobID, pq.Array(queryItemIDs), body, title,
 	)
-
 	if err != nil {
 		return fmt.Errorf("failed to update query item error processing true with body: %w", err)
 	}
@@ -341,7 +328,6 @@ func (r *Repository) CreateQueryLink(ctx context.Context, queryItemID uuid.UUID,
 			VALUES ($1, $2, $3)
 		`, queryItemID, text, url,
 	)
-
 	if err != nil {
 		return fmt.Errorf("failed to create link: %w, %s, %s", err, text, url)
 	}
@@ -365,7 +351,6 @@ func (r *Repository) GetUnprocessedQueryItemsCount(ctx context.Context, queryJob
 			WHERE query_job_id = $1 AND processed_at IS NULL
 		`, queryJobID,
 	)
-
 	if err != nil {
 		return 0, fmt.Errorf("failed to get count of unprocessed query items (%s): %w", queryJobID, err)
 	}
@@ -386,7 +371,6 @@ func (r *Repository) MarkQueryJobAsComplete(ctx context.Context, queryJobID uuid
 			WHERE id = $1
 		`, queryJobID,
 	)
-
 	if err != nil {
 		return fmt.Errorf("failed to mark query job (%s) as complete: %w", queryJobID.String(), err)
 	}
@@ -406,7 +390,6 @@ func (r *Repository) GetQueryJobs(ctx context.Context) (*[]types.QueryJob, error
 		&queryJobs,
 		`SELECT * FROM query_job ORDER BY created_at DESC`,
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get query jobs: %w", err)
 	}
@@ -433,7 +416,6 @@ func (r *Repository) GetQueryJobPositionHits(ctx context.Context, queryJobID uui
 			ORDER BY AVG(position) ASC
 		`,
 		queryJobID)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get query job position hits: %v", err)
 	}
@@ -457,7 +439,6 @@ func (r *Repository) GetQueryItemLinks(ctx context.Context, queryItemID uuid.UUI
 			WHERE query_item_id = $1
 		`,
 		queryItemID)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get query item links: %v", err)
 	}

@@ -67,6 +67,8 @@ func (c *Client) Scrape(ctx context.Context, link string) (*ScrapeResult, error)
 	// Title
 	title := doc.Find("title").Text()
 
+	log.Infof("\n[%s] - %s\n", link, title)
+
 	// Links
 	links := []Link{}
 	doc.Find("a[href]").Each(func(index int, item *goquery.Selection) {

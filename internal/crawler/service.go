@@ -90,7 +90,7 @@ func (s *Service) WebScraperParseQueryJobURL(ctx context.Context, snsEvent event
 		}
 
 		// Store Body
-		err = s.repository.SetQueryItemsProcessedWithBody(ctx, queryJobID, queryItemIDs, res.Body)
+		err = s.repository.SetQueryItemsProcessedWithBodyAndTitle(ctx, queryJobID, queryItemIDs, res.Body, res.Title)
 	} else {
 		// don't panic if there's a URL that can't be processed , just continue
 		log.Errorf("unable to request cleaned HTML with URL (%s) from webscraper: %v", url, err)
